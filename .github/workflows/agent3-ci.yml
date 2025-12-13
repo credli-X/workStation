@@ -1,0 +1,45 @@
+name: Agent 3 - "Database & Orchestration Specialist"
+
+on:
+  push:
+    paths:
+      - 'agents/agent3/**'
+      - 'modules/03-database-orchestration-specialist/**'
+  pull_request:
+    paths:
+      - 'agents/agent3/**'
+      - 'modules/03-database-orchestration-specialist/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v5
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          cd agents/agent3
+          npm install
+      
+      - name: Run tests
+        run: |
+          cd agents/agent3
+          npm test
+      
+      - name: Build
+        run: |
+          cd agents/agent3
+          npm run build
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v5
+        with:
+          name: agent3-dist
+          path: agents/agent3/dist

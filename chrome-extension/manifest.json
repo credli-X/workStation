@@ -1,0 +1,66 @@
+{
+  "manifest_version": 3,
+  "name": "Workstation AI Agent",
+  "version": "2.1.0",
+  "description": "Enterprise browser automation with 25+ AI agents, MCP sync, and auto-update",
+  "homepage_url": "https://github.com/creditXcredit/workstation",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "notifications"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup/index.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "type": "module"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "injected-styles.css",
+        "lib/pako.min.js",
+        "api-bridge.js",
+        "agent-registry.js",
+        "mcp-sync-manager.js",
+        "auto-updater.js",
+        "error-reporter.js",
+        "playwright/auto-wait.js",
+        "playwright/network.js",
+        "playwright/retry.js",
+        "playwright/execution.js",
+        "playwright/self-healing.js",
+        "playwright/form-filling.js",
+        "playwright/trace-recorder.js",
+        "playwright/agentic-network.js",
+        "playwright/context-learning.js",
+        "playwright/connection-pool.js",
+        "playwright/performance-monitor.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

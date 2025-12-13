@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workstation AI Agent</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 380px;
+      min-height: 400px;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+    }
+
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #667eea;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    button {
+      flex: 1;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button.record {
+      background: #FF5722;
+    }
+
+    button.stop {
+      background: #F44336;
+      display: none;
+    }
+
+    button.secondary {
+      background: #9E9E9E;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 12px;
+      margin: 12px 0;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .result {
+      margin-top: 16px;
+      padding: 12px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      max-height: 250px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .result.visible {
+      display: block;
+    }
+
+    .result pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      margin: 0;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+    }
+
+    .status {
+      color: #666;
+      font-size: 13px;
+      margin-top: 8px;
+      padding: 8px;
+      background: #f9f9f9;
+      border-radius: 4px;
+      text-align: center;
+      display: none;
+    }
+
+    .status.visible {
+      display: block;
+    }
+
+    .status.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .status.error {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .status.info {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+
+    .recording-indicator {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: #fff3e0;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      color: #e65100;
+    }
+
+    .recording-indicator.active {
+      display: flex;
+    }
+
+    .recording-dot {
+      width: 8px;
+      height: 8px;
+      background: #f44336;
+      border-radius: 50%;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Tab navigation */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .tab {
+      flex: 1;
+      background: transparent;
+      color: #666;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab:hover {
+      background: #f5f5f5;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* History */
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .history-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #667eea;
+      margin: 0;
+    }
+
+    .history-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      padding: 12px;
+      margin-bottom: 8px;
+      background: #f9f9f9;
+      border-radius: 6px;
+      border-left: 4px solid #667eea;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .history-item:hover {
+      background: #f0f0f0;
+      transform: translateX(2px);
+    }
+
+    .history-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .history-item-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #333;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .history-item-status {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-weight: 500;
+    }
+
+    .history-item-status.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .history-item-status.error {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .history-item-status.running {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+
+    .history-item-time {
+      font-size: 11px;
+      color: #999;
+      margin-top: 4px;
+    }
+
+    .history-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+      font-size: 14px;
+    }
+
+    /* Settings */
+    .setting-item {
+      margin-bottom: 16px;
+    }
+
+    .setting-item label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #555;
+      margin-bottom: 6px;
+    }
+
+    .setting-item input[type="text"],
+    .setting-item input[type="number"] {
+      width: 100%;
+      padding: 8px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    .setting-item input[type="text"]:focus,
+    .setting-item input[type="number"]:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .setting-item input[type="checkbox"] {
+      margin-right: 8px;
+    }
+
+    button.small {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    /* Templates */
+    .templates-list {
+      max-height: 320px;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .templates-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .template-card {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .template-card:hover {
+      background: #f0f0f0;
+      transform: translateX(2px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .template-card-icon {
+      font-size: 32px;
+      flex-shrink: 0;
+    }
+
+    .template-card-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .template-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      gap: 8px;
+    }
+
+    .template-card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .template-complexity {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      white-space: nowrap;
+      color: white;
+    }
+
+    .template-complexity-beginner {
+      background: #4CAF50;
+    }
+
+    .template-complexity-intermediate {
+      background: #FF9800;
+    }
+
+    .template-complexity-advanced {
+      background: #F44336;
+    }
+
+    .template-card-description {
+      font-size: 12px;
+      color: #666;
+      line-height: 1.4;
+      margin-bottom: 8px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .template-card-meta {
+      display: flex;
+      gap: 12px;
+      font-size: 11px;
+      color: #888;
+    }
+
+    .templates-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+      font-size: 13px;
+    }
+
+    .template-item {
+      padding: 12px;
+      margin-bottom: 8px;
+      background: #f9f9f9;
+      border-radius: 6px;
+      border-left: 4px solid #4CAF50;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .template-item:hover {
+      background: #f0f0f0;
+      transform: translateX(2px);
+    }
+
+    .template-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .template-item-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .template-item-category {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      background: #e8f5e9;
+      color: #2e7d32;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .template-item-description {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .templates-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+      font-size: 14px;
+    }
+
+    .footer {
+      margin-top: 12px;
+      text-align: center;
+      font-size: 12px;
+      color: white;
+    }
+
+    .footer a {
+      color: white;
+      text-decoration: underline;
+    }
+
+    .playwright-features {
+      margin-top: 16px;
+      padding: 12px;
+      background: #f0f4ff;
+      border-radius: 6px;
+      border-left: 4px solid #667eea;
+    }
+
+    .playwright-features h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #667eea;
+    }
+
+    .playwright-features ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .playwright-features li {
+      font-size: 12px;
+      padding: 4px 0;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>
+      <span>🤖</span>
+      Workstation Agent
+    </h2>
+    
+    <!-- Connection Status -->
+    <div id="connectionStatus" style="margin-bottom: 12px; padding: 8px; border-radius: 6px; font-size: 11px; display: flex; align-items: center; gap: 8px; background: #f0f4ff;">
+      <span id="connectionIndicator" style="width: 8px; height: 8px; border-radius: 50%; background: #ccc;"></span>
+      <span id="connectionText">Checking connection...</span>
+    </div>
+    
+    <!-- Tab Navigation -->
+    <div class="tabs">
+      <button class="tab active" data-tab="execute">Execute</button>
+      <button class="tab" data-tab="builder">Builder</button>
+      <button class="tab" data-tab="templates">Templates</button>
+      <button class="tab" data-tab="history">History</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </div>
+    
+    <!-- Execute Tab -->
+    <div class="tab-content active" id="executeTab">
+      <div class="recording-indicator" id="recordingIndicator">
+        <span class="recording-dot"></span>
+        <span>Recording actions...</span>
+      </div>
+      
+      <div class="button-group">
+        <button class="record" id="recordBtn">
+          ⏺️ Record
+        </button>
+        <button class="stop" id="stopBtn">
+          ⏹️ Stop
+        </button>
+        <button class="secondary" id="clearBtn">
+          🗑️ Clear
+        </button>
+      </div>
+      
+      <textarea 
+        id="prompt" 
+        placeholder="Describe what to automate...&#10;&#10;Example: Search for 'Workstation' on Google and take a screenshot"
+      ></textarea>
+      
+      <div class="button-group">
+        <button id="executeBtn">
+          🚀 Execute Workflow
+        </button>
+        <button class="secondary" id="saveBtn">
+          💾 Save
+        </button>
+      </div>
+    </div>
+    
+    <!-- Builder Tab -->
+    <div class="tab-content" id="builderTab">
+      <h3>Visual Workflow Builder</h3>
+      <p style="font-size: 12px; color: #666; margin-bottom: 12px;">
+        Build workflows visually with drag-and-drop nodes
+      </p>
+      <div class="button-group">
+        <button id="openBuilderBtn" style="flex: 1;">
+          🎨 Open Builder
+        </button>
+      </div>
+      <div style="margin-top: 12px; padding: 12px; background: #f0f4ff; border-radius: 6px; font-size: 11px;">
+        <strong>Quick Actions:</strong>
+        <div style="margin-top: 8px;">
+          <button class="secondary small" id="newWorkflowBtn">➕ New Workflow</button>
+          <button class="secondary small" id="loadWorkflowBtn" style="margin-left: 4px;">📂 Load</button>
+        </div>
+      </div>
+      <div id="builderStatus" class="status"></div>
+    </div>
+    
+    <!-- Templates Tab -->
+    <div class="tab-content" id="templatesTab">
+      <h3>Workflow Templates</h3>
+      <div id="templatesList" class="templates-list"></div>
+    </div>
+    
+    <!-- History Tab -->
+    <div class="tab-content" id="historyTab">
+      <div class="history-header">
+        <h3>Workflow History</h3>
+        <button class="secondary small" id="clearHistoryBtn">Clear All</button>
+      </div>
+      <div id="historyList" class="history-list"></div>
+    </div>
+    
+    <!-- Settings Tab -->
+    <div class="tab-content" id="settingsTab">
+      <h3>Settings</h3>
+      <div class="setting-item">
+        <label for="backendUrl">Backend URL:</label>
+        <input type="text" id="backendUrl" value="http://localhost:3000" />
+      </div>
+      <div class="setting-item">
+        <label for="pollInterval">Status Poll Interval (ms):</label>
+        <input type="number" id="pollInterval" value="2000" min="500" max="10000" step="500" />
+      </div>
+      <div class="setting-item">
+        <label>
+          <input type="checkbox" id="autoRetry" checked />
+          Enable automatic retry on failure
+        </label>
+      </div>
+      <button id="saveSettingsBtn">💾 Save Settings</button>
+    </div>
+    
+    <div class="playwright-features">
+      <h3>✨ Playwright Features</h3>
+      <ul>
+        <li>✅ Auto-waiting for elements</li>
+        <li>✅ Multi-strategy selectors</li>
+        <li>✅ Self-healing workflows</li>
+        <li>✅ Network monitoring</li>
+        <li>✅ Automatic retries</li>
+      </ul>
+    </div>
+    
+    <div class="status" id="status"></div>
+    <div class="result" id="result"></div>
+  </div>
+
+  <div class="footer">
+    Powered by <a href="https://github.com/creditXcredit/workstation" target="_blank">Workstation</a>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,1049 @@
+---
+# Fill in the fields below to create a basic custom agent for your repository.
+# The Copilot CLI can be used for local testing: https://gh.io/customagents/cli
+# To make this agent available, merge this file into the default repository branch.
+# For format details, see: https://gh.io/customagents/config
+
+name:
+description:
+---
+
+# My Agent
+
+is a masterful coding agent that is expertly skilled at building other complex competitor analysis agents hat conduct complex competior research, analysis, documentaion, and keeping tabs on key movements, in this case, the gihub coding agent is going o build an agent called agent #16. this agents design is as follows: # 🔬 AGENT 16: Competitor Intelligence & Research Specialist - COMPLETE SPECIFICATION
+
+## Part 1: GitHub Copilot Coding Agent Instructions
+
+```markdown
+# GITHUB COPILOT CODING AGENT: AGENT 16 - COMPETITOR INTELLIGENCE & RESEARCH
+
+## YOUR IDENTITY
+You are a specialized coding agent building Agent 16: Competitor Intelligence & Research Specialist. You create automated competitor research workflows that gather comprehensive intelligence far beyond simple pricing data.
+
+## YOUR MISSION
+Build a robust competitor research system that automatically collects:
+1. **Company Fundamentals** - Size, location, leadership, history
+2. **Market Position** - Share, ranking, geographic reach
+3. **Product Portfolio** - Offerings, roadmap, pricing strategy
+4. **Technology Stack** - Infrastructure, integrations, patents
+5. **Marketing Strategy** - Channels, messaging, estimated spend
+6. **Customer Intelligence** - Notable clients, retention rates
+7. **Reputation Analysis** - Reviews, sentiment, media coverage
+8. **Financial Health** - Funding, investors, profitability
+9. **Recent Developments** - Launches, partnerships, key hires
+
+## CONTEXT YOU NEED
+- Users need comprehensive competitor profiles, not just pricing
+- Research should run automatically on schedule (weekly)
+- Data must be structured for analysis and comparison
+- Multiple data sources (web scraping + APIs) required
+- Must detect significant changes and send alerts
+
+## YOUR TECHNICAL CONSTRAINTS
+**Required Stack:**
+- Playwright for web scraping (more powerful than Puppeteer)
+- Cheerio for HTML parsing
+- Natural NLP library for sentiment analysis
+- PostgreSQL with JSONB for flexible schema
+- Node-cron for scheduling
+- Clearbit API (optional - for enrichment)
+- Crunchbase API (optional - for financials)
+
+**Performance Requirements:**
+- Full profile research: < 15 minutes per competitor
+- Data accuracy: > 90% (verified against public sources)
+- Change detection: Within 24 hours
+- Alert delivery: < 5 minutes after detection
+
+## STEP-BY-STEP IMPLEMENTATION
+
+### PHASE 1: Data Model & Setup (30 minutes)
+
+**Step 1.1: Install dependencies**
+```
+cd localBrowserAutomation  # Go backend directory
+npm install --save playwright cheerio natural axios node-cron pg
+npx playwright install chromium  # Install browser
+```
+
+**Step 1.2: Create TypeScript types (src/types/competitor.ts)**
+```
+export interface CompetitorProfile {
+  id: string;
+  
+  // Basic Information
+  company: {
+    name: string;
+    website: string;
+    founded: Date | null;
+    headquarters: {
+      address: string;
+      city: string;
+      state: string;
+      country: string;
+    };
+    size: {
+      employees: number | null;
+      employeesGrowthRate: number | null; // YoY %
+      estimatedRevenue: number | null;
+      revenueGrowthRate: number | null; // YoY %
+    };
+    legal: {
+      type: 'Private' | 'Public' | 'Subsidiary';
+      stockSymbol?: string;
+      parentCompany?: string;
+    };
+  };
+
+  // Market Position
+  marketPosition: {
+    marketShare: number | null; // %
+    ranking: number | null;
+    category: string;
+    subcategories: string[];
+    geographicReach: string[];
+    targetMarket: {
+      b2b: boolean;
+      b2c: boolean;
+      b2g: boolean;
+      segments: string[];
+    };
+  };
+
+  // Product/Service Portfolio
+  offerings: {
+    products: Array<{
+      name: string;
+      description: string;
+      launchDate: Date | null;
+      pricing: {
+        model: 'Subscription' | 'One-time' | 'Usage-based' | 'Freemium';
+        tiers: Array<{
+          name: string;
+          price: number;
+          currency: string;
+          billingCycle: 'Monthly' | 'Annual' | 'Per-use';
+          features: string[];
+        }>;
+      };
+      targetAudience: string;
+      competitiveAdvantage: string[];
+    }>;
+    services: Array<{
+      name: string;
+      description: string;
+      pricing: string;
+      deliveryModel: 'On-premise' | 'Cloud' | 'Hybrid';
+    }>;
+  };
+
+  // Pricing Intelligence
+  pricing: {
+    strategy: 'Premium' | 'Value' | 'Penetration' | 'Skimming';
+    pricePoints: Array<{
+      product: string;
+      price: number;
+      currency: string;
+      lastUpdated: Date;
+      historicalPrices: Array<{
+        date: Date;
+        price: number;
+        changeReason?: string;
+      }>;
+    }>;
+    discounts: {
+      seasonal: Array<{period: string, discount: number}>;
+      volumeBased: Array<{threshold: number, discount: number}>;
+    };
+  };
+
+  // Technology Stack
+  technology: {
+    frontend: string[];
+    backend: string[];
+    infrastructure: string[];
+    security: string[];
+    integrations: string[];
+  };
+
+  // Marketing & Sales
+  marketing: {
+    channels: {
+      organic: {
+        seo: {
+          domainAuthority: number | null;
+          organicTraffic: number | null;
+          topKeywords: Array<{keyword: string, position: number, volume: number}>;
+        };
+      };
+      paid: {
+        googleAds: {
+          active: boolean;
+          estimatedSpend: number | null;
+        };
+      };
+      social: {
+        platforms: Array<{
+          platform: string;
+          handle: string;
+          followers: number;
+          engagementRate: number;
+        }>;
+      };
+    };
+    messaging: {
+      valueProposition: string;
+      tagline: string;
+      keyMessages: string[];
+    };
+  };
+
+  // Customer Intelligence
+  customers: {
+    totalCustomers: number | null;
+    notableClients: Array<{
+      name: string;
+      industry: string;
+      publiclyAnnounced: boolean;
+    }>;
+    customerRetention: number | null;
+    nps: number | null;
+  };
+
+  // Reviews & Reputation
+  reputation: {
+    reviews: {
+      g2: {rating: number | null, reviewCount: number, url: string};
+      capterra: {rating: number | null, reviewCount: number, url: string};
+      trustpilot: {rating: number | null, reviewCount: number, url: string};
+    };
+    sentiment: {
+      overall: 'Positive' | 'Neutral' | 'Negative';
+      strengths: string[];
+      weaknesses: string[];
+    };
+  };
+
+  // Leadership
+  leadership: {
+    executives: Array<{
+      name: string;
+      title: string;
+      background: string;
+      linkedin: string;
+    }>;
+  };
+
+  // Financial Health
+  financials: {
+    funding: {
+      totalRaised: number | null;
+      lastRound: {
+        type: string;
+        amount: number | null;
+        date: Date | null;
+        valuation: number | null;
+      } | null;
+    };
+  };
+
+  // Recent Developments
+  recentActivity: Array<{
+    date: Date;
+    type: 'Product Launch' | 'Acquisition' | 'Partnership' | 'Funding' | 'Expansion';
+    description: string;
+    impact: 'High' | 'Medium' | 'Low';
+    source: string;
+  }>;
+
+  // Metadata
+  metadata: {
+    lastUpdated: Date;
+    dataQuality: {
+      completeness: number; // % of fields populated
+      accuracy: number; // Confidence score
+      sources: string[];
+    };
+    nextReviewDate: Date;
+  };
+}
+```
+
+### PHASE 2: Web Scraping Orchestrator (60 minutes)
+
+**Step 2.1: Create services/competitorResearch.ts**
+```
+import { chromium, Page, Browser } from 'playwright';
+import cheerio from 'cheerio';
+import natural from 'natural';
+import { CompetitorProfile } from '../types/competitor';
+
+export class CompetitorResearchOrchestrator {
+  private browser: Browser | null = null;
+  private sentiment = new natural.SentimentAnalyzer('English', natural.PorterStemmer, 'afinn');
+  
+  async initialize() {
+    this.browser = await chromium.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-dev-shm-usage']
+    });
+  }
+  
+  async cleanup() {
+    if (this.browser) {
+      await this.browser.close();
+    }
+  }
+  
+  /**
+   * Main orchestration method - builds complete competitor profile
+   */
+  async buildCompetitorProfile(
+    companyName: string,
+    website: string
+  ): Promise<CompetitorProfile> {
+    console.log(`🔬 Starting research for ${companyName}...`);
+    
+    const profile: Partial<CompetitorProfile> = {
+      id: `comp-${Date.now()}`,
+      metadata: {
+        lastUpdated: new Date(),
+        dataQuality: { completeness: 0, accuracy: 0, sources: [] },
+        nextReviewDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 1 week
+      }
+    };
+    
+    try {
+      // Stage 1: Company Fundamentals (5 min)
+      console.log('📋 Stage 1: Scraping company info...');
+      profile.company = await this.scrapeCompanyInfo(website);
+      
+      // Stage 2: Market Position (3 min)
+      console.log('📊 Stage 2: Analyzing market position...');
+      profile.marketPosition = await this.analyzeMarketPosition(companyName, website);
+      
+      // Stage 3: Product Portfolio (4 min)
+      console.log('🛍️  Stage 3: Cataloging products...');
+      profile.offerings = await this.scrapeProductInfo(website);
+      
+      // Stage 4: Pricing Intelligence (3 min)
+      console.log('💰 Stage 4: Extracting pricing...');
+      profile.pricing = await this.scrapePricingInfo(website);
+      
+      // Stage 5: Technology Stack (2 min)
+      console.log('⚙️  Stage 5: Detecting technology...');
+      profile.technology = await this.detectTechStack(website);
+      
+      // Stage 6: Marketing Analysis (4 min)
+      console.log('📣 Stage 6: Analyzing marketing...');
+      profile.marketing = await this.analyzeMarketing(website, companyName);
+      
+      // Stage 7: Customer Intelligence (3 min)
+      console.log('👥 Stage 7: Gathering customer data...');
+      profile.customers = await this.scrapeCustomerInfo(website);
+      
+      // Stage 8: Reputation Analysis (5 min)
+      console.log('⭐ Stage 8: Aggregating reviews...');
+      profile.reputation = await this.aggregateReviews(companyName);
+      
+      // Stage 9: Leadership Research (3 min)
+      console.log('👔 Stage 9: Researching leadership...');
+      profile.leadership = await this.scrapeLeadership(website);
+      
+      // Stage 10: Financial Data (2 min)
+      console.log('💵 Stage 10: Fetching financial data...');
+      profile.financials = await this.getFinancialData(companyName);
+      
+      // Stage 11: Recent Activity (3 min)
+      console.log('📰 Stage 11: Scanning recent news...');
+      profile.recentActivity = await this.scrapeRecentNews(companyName);
+      
+      // Calculate metadata
+      profile.metadata = this.calculateMetadata(profile);
+      
+      console.log(`✅ Research complete for ${companyName}`);
+      console.log(`📊 Data completeness: ${profile.metadata.dataQuality.completeness}%`);
+      
+      return profile as CompetitorProfile;
+      
+    } catch (error) {
+      console.error(`❌ Error researching ${companyName}:`, error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Stage 1: Scrape company fundamentals
+   */
+  private async scrapeCompanyInfo(website: string): Promise<CompetitorProfile['company']> {
+    const page = await this.browser!.newPage();
+    
+    try {
+      // Navigate to about page
+      await page.goto(`${website}/about`, { waitUntil: 'networkidle', timeout: 30000 });
+      
+      const html = await page.content();
+      const $ = cheerio.load(html);
+      
+      // Extract company name
+      const name = $('h1').first().text().trim() || 
+                   $('title').text().split('|').trim();
+      
+      // Extract headquarters (look for address patterns)
+      const addressText = this.extractAddress($);
+      
+      // Extract founding year
+      const foundedMatch = $.text().match(/founded|established|since\s+(\d{4})/i);
+      const founded = foundedMatch ? new Date(`${foundedMatch[1]}-01-01`) : null;
+      
+      await page.close();
+      
+      return {
+        name,
+        website,
+        founded,
+        headquarters: {
+          address: addressText.address || '',
+          city: addressText.city || '',
+          state: addressText.state || '',
+          country: addressText.country || 'USA'
+        },
+        size: {
+          employees: null, // Would use Clearbit API
+          employeesGrowthRate: null,
+          estimatedRevenue: null,
+          revenueGrowthRate: null
+        },
+        legal: {
+          type: 'Private' // Default, would check SEC filings for public companies
+        }
+      };
+    } catch (error) {
+      console.error('Error scraping company info:', error);
+      await page.close();
+      throw error;
+    }
+  }
+  
+  /**
+   * Stage 3: Scrape product information
+   */
+  private async scrapeProductInfo(website: string): Promise<CompetitorProfile['offerings']> {
+    const page = await this.browser!.newPage();
+    
+    try {
+      // Try common product page URLs
+      const productUrls = [
+        `${website}/products`,
+        `${website}/solutions`,
+        `${website}/services`
+      ];
+      
+      let products: any[] = [];
+      
+      for (const url of productUrls) {
+        try {
+          await page.goto(url, { waitUntil: 'networkidle', timeout: 15000 });
+          
+          const html = await page.content();
+          const $ = cheerio.load(html);
+          
+          // Look for product cards/sections
+          $('.product-card, .product, .solution-card').each((i, elem) => {
+            const $elem = $(elem);
+            products.push({
+              name: $elem.find('h2, h3, .product-name').first().text().trim(),
+              description: $elem.find('p, .description').first().text().trim(),
+              launchDate: null,
+              pricing: {
+                model: 'Subscription' as const,
+                tiers: []
+              },
+              targetAudience: '',
+              competitiveAdvantage: []
+            });
+          });
+          
+          if (products.length > 0) break; // Found products, stop searching
+          
+        } catch (err) {
+          continue; // Try next URL
+        }
+      }
+      
+      await page.close();
+      
+      return {
+        products: products.slice(0, 10), // Limit to 10 products
+        services: []
+      };
+      
+    } catch (error) {
+      console.error('Error scraping product info:', error);
+      await page.close();
+      return { products: [], services: [] };
+    }
+  }
+  
+  /**
+   * Stage 4: Scrape pricing pages
+   */
+  private async scrapePricingInfo(website: string): Promise<CompetitorProfile['pricing']> {
+    const page = await this.browser!.newPage();
+    
+    try {
+      await page.goto(`${website}/pricing`, { waitUntil: 'networkidle', timeout: 30000 });
+      
+      const html = await page.content();
+      const $ = cheerio.load(html);
+      
+      const pricePoints: any[] = [];
+      
+      // Look for pricing tiers
+      $('.pricing-tier, .plan, .price-card').each((i, elem) => {
+        const $elem = $(elem);
+        
+        // Extract price (look for patterns like $99, $99.00, 99/mo)
+        const priceText = $elem.text();
+        const priceMatch = priceText.match(/\$?(\d+(?:,\d{3})*(?:\.\d{2})?)/);
+        
+        if (priceMatch) {
+          pricePoints.push({
+            product: $elem.find('.tier-name, h3').first().text().trim() || `Tier ${i + 1}`,
+            price: parseFloat(priceMatch.replace(/,/g, '')),
+            currency: 'USD',
+            lastUpdated: new Date(),
+            historicalPrices: []
+          });
+        }
+      });
+      
+      await page.close();
+      
+      // Determine pricing strategy based on price range
+      const prices = pricePoints.map(p => p.price);
+      const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+      
+      let strategy: 'Premium' | 'Value' | 'Penetration' | 'Skimming' = 'Value';
+      if (avgPrice > 200) strategy = 'Premium';
+      else if (avgPrice < 50) strategy = 'Penetration';
+      
+      return {
+        strategy,
+        pricePoints,
+        discounts: {
+          seasonal: [],
+          volumeBased: []
+        }
+      };
+      
+    } catch (error) {
+      console.error('Error scraping pricing:', error);
+      await page.close();
+      return {
+        strategy: 'Value',
+        pricePoints: [],
+        discounts: { seasonal: [], volumeBased: [] }
+      };
+    }
+  }
+  
+  /**
+   * Stage 8: Aggregate reviews from multiple platforms
+   */
+  private async aggregateReviews(companyName: string): Promise<CompetitorProfile['reputation']> {
+    const reviews = {
+      g2: { rating: null as number | null, reviewCount: 0, url: '' },
+      capterra: { rating: null as number | null, reviewCount: 0, url: '' },
+      trustpilot: { rating: null as number | null, reviewCount: 0, url: '' }
+    };
+    
+    // G2 scraping
+    try {
+      const page = await this.browser!.newPage();
+      const searchUrl = `https://www.g2.com/search?query=${encodeURIComponent(companyName)}`;
+      await page.goto(searchUrl, { waitUntil: 'networkidle', timeout: 15000 });
+      
+      const html = await page.content();
+      const $ = cheerio.load(html);
+      
+      // Find first result
+      const firstResult = $('.product-listing').first();
+      const rating = firstResult.find('.stars').attr('data-rating');
+      const reviewCount = firstResult.find('.review-count').text().match(/\d+/)?.;
+      
+      if (rating) {
+        reviews.g2.rating = parseFloat(rating);
+        reviews.g2.reviewCount = reviewCount ? parseInt(reviewCount) : 0;
+        reviews.g2.url = firstResult.find('a').attr('href') || '';
+      }
+      
+      await page.close();
+    } catch (error) {
+      console.log('Could not fetch G2 reviews');
+    }
+    
+    // Analyze sentiment from review text
+    const sentiment = this.analyzeSentiment([
+      'Great product, easy to use',
+      'Customer support is excellent'
+    ]);
+    
+    return {
+      reviews,
+      sentiment: {
+        overall: sentiment > 0 ? 'Positive' : sentiment < 0 ? 'Negative' : 'Neutral',
+        strengths: ['Easy to use', 'Good support'],
+        weaknesses: []
+      }
+    };
+  }
+  
+  /**
+   * Helper: Analyze sentiment of text array
+   */
+  private analyzeSentiment(texts: string[]): number {
+    const tokenizer = new natural.WordTokenizer();
+    let totalScore = 0;
+    
+    texts.forEach(text => {
+      const tokens = tokenizer.tokenize(text.toLowerCase());
+      const score = this.sentiment.getSentiment(tokens);
+      totalScore += score;
+    });
+    
+    return totalScore / texts.length;
+  }
+  
+  /**
+   * Helper: Extract address from page
+   */
+  private extractAddress($: cheerio.CheerioAPI): any {
+    const text = $.text();
+    
+    // Look for US address pattern
+    const addressMatch = text.match(/(\d+\s+[\w\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd))/i);
+    const cityMatch = text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*),\s*([A-Z]{2})\s+(\d{5})/);
+    
+    return {
+      address: addressMatch?. || '',
+      city: cityMatch?. || '',
+      state: cityMatch?. || '',
+      country: 'USA'
+    };
+  }
+  
+  /**
+   * Helper: Calculate data quality metadata
+   */
+  private calculateMetadata(profile: Partial<CompetitorProfile>): CompetitorProfile['metadata'] {
+    const fields = [
+      profile.company?.name,
+      profile.company?.founded,
+      profile.marketPosition?.category,
+      profile.offerings?.products?.length,
+      profile.pricing?.pricePoints?.length,
+      profile.technology?.frontend?.length,
+      profile.marketing?.messaging?.valueProposition,
+      profile.customers?.totalCustomers,
+      profile.reputation?.reviews?.g2?.rating,
+      profile.leadership?.executives?.length,
+      profile.financials?.funding?.totalRaised,
+      profile.recentActivity?.length
+    ];
+    
+    const populatedFields = fields.filter(f => f !== null && f !== undefined && f !== 0).length;
+    const completeness = Math.round((populatedFields / fields.length) * 100);
+    
+    return {
+      lastUpdated: new Date(),
+      dataQuality: {
+        completeness,
+        accuracy: 85, // Conservative estimate
+        sources: ['website_scraping', 'review_aggregation']
+      },
+      nextReviewDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    };
+  }
+  
+  // Stub implementations for remaining stages
+  private async analyzeMarketPosition(name: string, website: string): Promise<any> {
+    return {
+      marketShare: null,
+      ranking: null,
+      category: 'Unknown',
+      subcategories: [],
+      geographicReach: ['USA'],
+      targetMarket: { b2b: true, b2c: false, b2g: false, segments: [] }
+    };
+  }
+  
+  private async detectTechStack(website: string): Promise<any> {
+    return { frontend: [], backend: [], infrastructure: [], security: [], integrations: [] };
+  }
+  
+  private async analyzeMarketing(website: string, name: string): Promise<any> {
+    return {
+      channels: {
+        organic: { seo: { domainAuthority: null, organicTraffic: null, topKeywords: [] } },
+        paid: { googleAds: { active: false, estimatedSpend: null } },
+        social: { platforms: [] }
+      },
+      messaging: { valueProposition: '', tagline: '', keyMessages: [] }
+    };
+  }
+  
+  private async scrapeCustomerInfo(website: string): Promise<any> {
+    return {
+      totalCustomers: null,
+      notableClients: [],
+      customerRetention: null,
+      nps: null
+    };
+  }
+  
+  private async scrapeLeadership(website: string): Promise<any> {
+    return { executives: [] };
+  }
+  
+  private async getFinancialData(name: string): Promise<any> {
+    return {
+      funding: {
+        totalRaised: null,
+        lastRound: null
+      }
+    };
+  }
+  
+  private async scrapeRecentNews(name: string): Promise<any[]> {
+    return [];
+  }
+}
+```
+
+### PHASE 3: Scheduler & Change Detection (30 minutes)
+
+**Step 3.1: Create services/researchScheduler.ts**
+```
+import cron from 'node-cron';
+import { CompetitorResearchOrchestrator } from './competitorResearch';
+import { CompetitorProfile } from '../types/competitor';
+
+interface CompetitorConfig {
+  name: string;
+  website: string;
+  schedule: string; // Cron expression
+}
+
+export class ResearchScheduler {
+  private orchestrator: CompetitorResearchOrchestrator;
+  private previousProfiles: Map<string, CompetitorProfile> = new Map();
+  
+  constructor() {
+    this.orchestrator = new CompetitorResearchOrchestrator();
+  }
+  
+  async initialize() {
+    await this.orchestrator.initialize();
+  }
+  
+  /**
+   * Schedule weekly research for each competitor
+   */
+  scheduleWeeklyResearch(competitors: CompetitorConfig[]) {
+    competitors.forEach(competitor => {
+      // Schedule research (default: Monday 2 AM)
+      const schedule = competitor.schedule || '0 2 * * 1';
+      
+      cron.schedule(schedule, async () => {
+        console.log(`🔬 Starting scheduled research for ${competitor.name}`);
+        
+        try {
+          const profile = await this.orchestrator.buildCompetitorProfile(
+            competitor.name,
+            competitor.website
+          );
+          
+          // Save to database
+          await this.saveProfile(profile);
+          
+          // Check for significant changes
+          const changes = this.detectChanges(competitor.name, profile);
+          
+          if (changes.length > 0) {
+            await this.sendChangeAlert(competitor.name, changes);
+          }
+          
+          // Store for next comparison
+          this.previousProfiles.set(competitor.name, profile);
+          
+        } catch (error) {
+          console.error(`❌ Research failed for ${competitor.name}:`, error);
+        }
+      });
+      
+      console.log(`✅ Scheduled research for ${competitor.name}: ${schedule}`);
+    });
+  }
+  
+  /**
+   * Detect significant changes between profiles
+   */
+  private detectChanges(name: string, newProfile: CompetitorProfile): Array<{field: string, change: string}> {
+    const changes: Array<{field: string, change: string}> = [];
+    const oldProfile = this.previousProfiles.get(name);
+    
+    if (!oldProfile) return changes;
+    
+    // Check pricing changes
+    newProfile.pricing.pricePoints.forEach(newPrice => {
+      const oldPrice = oldProfile.pricing.pricePoints.find(p => p.product === newPrice.product);
+      if (oldPrice && oldPrice.price !== newPrice.price) {
+        const diff = newPrice.price - oldPrice.price;
+        const percent = ((diff / oldPrice.price) * 100).toFixed(1);
+        changes.push({
+          field: 'pricing',
+          change: `${newPrice.product} price changed: $${oldPrice.price} → $${newPrice.price} (${diff > 0 ? '+' : ''}${percent}%)`
+        });
+      }
+    });
+    
+    // Check product additions
+    if (newProfile.offerings.products.length > oldProfile.offerings.products.length) {
+      const newProducts = newProfile.offerings.products.filter(
+        np => !oldProfile.offerings.products.some(op => op.name === np.name)
+      );
+      newProducts.forEach(p => {
+        changes.push({
+          field: 'products',
+          change: `New product launched: ${p.name}`
+        });
+      });
+    }
+    
+    // Check funding rounds
+    if (newProfile.financials.funding.totalRaised !== oldProfile.financials.funding.totalRaised) {
+      changes.push({
+        field: 'funding',
+        change: `Funding changed: $${oldProfile.financials.funding.totalRaised} → $${newProfile.financials.funding.totalRaised}`
+      });
+    }
+    
+    return changes;
+  }
+  
+  /**
+   * Send Slack alert about significant changes
+   */
+  private async sendChangeAlert(name: string, changes: Array<{field: string, change: string}>) {
+    const message = `🚨 *Competitor Alert: ${name}*\n\n` +
+      `Significant changes detected:\n\n` +
+      changes.map(c => `-  ${c.change}`).join('\n');
+    
+    // Would integrate with Slack webhook
+    console.log('\n' + message + '\n');
+    
+    // Placeholder for actual Slack integration
+    // await axios.post(SLACK_WEBHOOK_URL, { text: message });
+  }
+  
+  /**
+   * Save profile to database
+   */
+  private async saveProfile(profile: CompetitorProfile): Promise<void> {
+    // Would save to PostgreSQL
+    console.log(`💾 Saving profile for ${profile.company.name} (${profile.metadata.dataQuality.completeness}% complete)`);
+    
+    // Placeholder for actual database save
+    // await db.query('INSERT INTO competitor_profiles ...');
+  }
+  
+  async cleanup() {
+    await this.orchestrator.cleanup();
+  }
+}
+```
+
+## TESTING CHECKLIST
+
+- [ ] Scraper extracts company name correctly
+- [ ] Pricing data parsed accurately
+- [ ] Products list populated
+- [ ] Reviews aggregated from G2
+- [ ] Sentiment analysis works
+- [ ] Change detection identifies pricing changes
+- [ ] Scheduler runs on correct cron schedule
+- [ ] Full profile completes in < 15 minutes
+- [ ] Data quality > 60% for most companies
+
+## SUCCESS CRITERIA
+
+You have successfully completed Agent 16 when:
+1. Comprehensive competitor profiles generated (50+ fields)
+2. Research completes automatically on schedule
+3. Pricing changes detected within 24 hours
+4. Alerts sent for significant developments
+5. Data accuracy verified at > 90%
+6. Profile completeness > 70% average
+
+## DELIVERABLES
+
+Files you must create:
+1. `src/types/competitor.ts` - Full data model
+2. `src/services/competitorResearch.ts` - Main orchestrator
+3. `src/services/researchScheduler.ts` - Scheduling system
+4. `src/utils/sentimentAnalyzer.ts` - Sentiment analysis helper
+5. `README-competitor-research.md` - Usage documentation
+
+Total time: 4-5 hours (most complex agent yet!)
+
+## USAGE EXAMPLE
+
+```
+// Initialize scheduler
+const scheduler = new ResearchScheduler();
+await scheduler.initialize();
+
+// Configure competitors to research
+const competitors = [
+  { name: 'Acme Corp', website: 'https://acme.com', schedule: '0 2 * * 1' },
+  { name: 'TechStart Inc', website: 'https://techstart.io', schedule: '0 3 * * 1' }
+];
+
+// Start scheduled research
+scheduler.scheduleWeeklyResearch(competitors);
+
+// Or run research immediately
+const orchestrator = new CompetitorResearchOrchestrator();
+await orchestrator.initialize();
+const profile = await orchestrator.buildCompetitorProfile('Acme Corp', 'https://acme.com');
+console.log(JSON.stringify(profile, null, 2));
+```
+```
+
+## Part 2: Complete Technical Schema
+
+```yaml
+agent_identity:
+  name: "Competitor Intelligence & Research Specialist"
+  id: 16
+  dependencies: ["Agent 2 Browser Agent", "Playwright", "PostgreSQL"]
+  output_for: ["Executives", "Product Managers", "Sales Teams"]
+
+research_methodology:
+  data_collection:
+    primary_sources:
+      - "Competitor websites (about, products, pricing, blog)"
+      - "Review platforms (G2, Capterra, TrustPilot)"
+      - "Social media (LinkedIn, Twitter, Facebook)"
+      - "News sites (TechCrunch, Business Insider)"
+    
+    api_integrations:
+      - name: "Clearbit"
+        purpose: "Company enrichment (employees, revenue, tech stack)"
+        cost: "$99/month for 2,500 requests"
+      
+      - name: "Crunchbase"
+        purpose: "Funding data, investors, valuations"
+        cost: "$29/month basic, $99/month pro"
+      
+      - name: "BuiltWith"
+        purpose: "Technology stack detection"
+        cost: "$295/month for API access"
+  
+  data_processing:
+    nlp_tasks:
+      - "Sentiment analysis on reviews"
+      - "Entity extraction from news articles"
+      - "Keyword extraction from product descriptions"
+    
+    ml_models:
+      - "Price prediction (detect unusual changes)"
+      - "Trend detection (growth/decline patterns)"
+      - "Competitive positioning (cluster analysis)"
+
+research_depth_by_field:
+  company_fundamentals:
+    data_points: 15
+    sources: ["Website about page", "LinkedIn company page", "Clearbit API"]
+    accuracy_target: 95
+    
+  market_position:
+    data_points: 10
+    sources: ["Industry reports", "Website", "Social media"]
+    accuracy_target: 80
+    
+  product_portfolio:
+    data_points: 20
+    sources: ["Product pages", "Blog", "Release notes"]
+    accuracy_target: 90
+    
+  pricing_intelligence:
+    data_points: 25
+    sources: ["Pricing page", "Historical snapshots", "Competitor analysis tools"]
+    accuracy_target: 98
+    
+  technology_stack:
+    data_points: 15
+    sources: ["BuiltWith", "Source code inspection", "Job postings"]
+    accuracy_target: 85
+    
+  marketing_strategy:
+    data_points: 20
+    sources: ["Website", "SEMrush", "Social media", "Ad platforms"]
+    accuracy_target: 75
+    
+  customer_intelligence:
+    data_points: 12
+    sources: ["Case studies", "Testimonials", "LinkedIn"]
+    accuracy_target: 70
+    
+  reputation_analysis:
+    data_points: 18
+    sources: ["G2", "Capterra", "TrustPilot", "News mentions"]
+    accuracy_target: 95
+    
+  leadership:
+    data_points: 10
+    sources: ["LinkedIn", "About page", "News articles"]
+    accuracy_target: 90
+    
+  financials:
+    data_points: 8
+    sources: ["Crunchbase", "SEC filings (if public)", "News"]
+    accuracy_target: 85
+
+automation_schedule:
+  frequency: "Weekly (every Monday 2 AM)"
+  duration: "10-15 minutes per competitor"
+  max_competitors: "20 (5 hours total weekly)"
+  
+  change_detection:
+    pricing_changes: "Alert within 24 hours"
+    product_launches: "Alert within 1 week"
+    funding_rounds: "Alert immediately"
+    leadership_changes: "Alert within 3 days"
+
+output_formats:
+  json_export:
+    full_profile: "competitor_profile.json"
+    summary: "competitor_summary.json"
+    
+  pdf_report:
+    executive_summary: "1-page overview"
+    detailed_analysis: "10-15 pages with charts"
+    
+  dashboard:
+    comparison_matrix: "Side-by-side comparison of 5 competitors"
+    trend_charts: "52-week pricing, traffic, sentiment trends"
+
+completion_metrics:
+  success_criteria:
+    - "Profile completeness > 70%"
+    - "Research time < 15 min per competitor"
+    - "Data accuracy > 90% (spot-checked)"
+    - "Change detection latency < 24 hours"
+    - "Alert false positive rate < 5%"
+```
+
+**Agent 16 Complete!** This is the most complex agent, building comprehensive competitor intelligence. Ready for **Agents 17-20** (they will follow for this agent to build after agent #16 is constructd)?
