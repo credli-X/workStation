@@ -148,7 +148,7 @@ jobs:
           cat verification-report.md
       
       - name: Upload verification report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: verification-report
           path: verification-report.md

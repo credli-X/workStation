@@ -207,7 +207,7 @@ jobs:
         continue-on-error: true
       
       - name: Upload snapshot artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: rollback-snapshot-${{ github.sha }}
           path: .rollback/snapshots/
