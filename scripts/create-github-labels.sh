@@ -39,7 +39,7 @@ print_warning() {
 
 # Configuration
 # Auto-detect repository from git remote, or use provided argument
-if [ -n "$1" ]; then
+if [ -n "${1:-}" ]; then
     REPO="$1"
 else
     # Extract owner/repo from git remote URL
