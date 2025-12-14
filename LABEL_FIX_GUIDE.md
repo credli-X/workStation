@@ -10,7 +10,47 @@ These labels are referenced in `.github/dependabot.yml` but don't exist in the G
 
 ---
 
-## Quick Fix (5 minutes)
+## ⚡ Automated Solution (Recommended)
+
+### Option A: GitHub Actions Workflow (Zero Setup)
+
+1. **Trigger the automated workflow:**
+   ```
+   https://github.com/credli-X/workStation/actions/workflows/create-labels.yml
+   ```
+
+2. **Click "Run workflow"** button (top right)
+
+3. **Select options:**
+   - Branch: `main` (or current branch)
+   - Dry run: `false` (to actually create labels)
+
+4. **Click "Run workflow"** (green button)
+
+5. **Wait 30 seconds** - Workflow will:
+   - Check if labels exist
+   - Create missing labels automatically
+   - Show summary of results
+
+6. **Verify:** Check https://github.com/credli-X/workStation/labels
+
+### Option B: Local Script (Requires gh CLI)
+
+If you have the repository cloned and `gh` CLI authenticated:
+
+```bash
+# From repository root
+./scripts/create-github-labels.sh
+```
+
+**Prerequisites:**
+- GitHub CLI installed: https://cli.github.com/
+- Authenticated: `gh auth login`
+- Write access to repository
+
+---
+
+## Manual Fix (5 minutes)
 
 ### Using GitHub Web UI
 
