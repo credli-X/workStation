@@ -91,6 +91,7 @@ create_label() {
         return 0
     else
         # Check if it already exists (exact match using fixed string)
+        # Note: Tab character after $name ensures exact match (gh label list uses tab delimiter)
         if gh label list --repo "$REPO" --limit 1000 | grep -qF "$name	"; then
             print_warning "Label '$name' already exists"
             return 0

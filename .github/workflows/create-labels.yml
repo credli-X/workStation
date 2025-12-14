@@ -47,6 +47,7 @@ jobs:
           MISSING=()
           for label in "dependencies" "github-actions" "production" "automated"; do
             # Use grep -F for fixed string matching with tab delimiter
+            # Note: Tab after $label ensures exact match (gh label list uses tab as field separator)
             if ! gh label list --repo ${{ github.repository }} --limit 1000 | grep -qF "$label	"; then
               MISSING+=("$label")
             fi
@@ -64,6 +65,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Tab after label name ensures exact match (gh label list uses tab as delimiter)
           if gh label list --repo ${{ github.repository }} --limit 1000 | grep -qF "dependencies	"; then
             echo "ℹ️  Label 'dependencies' already exists"
           else
@@ -80,6 +82,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Tab after label name ensures exact match (gh label list uses tab as delimiter)
           if gh label list --repo ${{ github.repository }} --limit 1000 | grep -qF "github-actions	"; then
             echo "ℹ️  Label 'github-actions' already exists"
           else
@@ -96,6 +99,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Tab after label name ensures exact match (gh label list uses tab as delimiter)
           if gh label list --repo ${{ github.repository }} --limit 1000 | grep -qF "production	"; then
             echo "ℹ️  Label 'production' already exists"
           else
@@ -112,6 +116,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Tab after label name ensures exact match (gh label list uses tab as delimiter)
           if gh label list --repo ${{ github.repository }} --limit 1000 | grep -qF "automated	"; then
             echo "ℹ️  Label 'automated' already exists"
           else
@@ -130,7 +135,8 @@ jobs:
         run: |
           echo "📊 Final label status:"
           echo ""
-          # Show exact matches only (using tab as field separator)
+          # Show exact matches only (tabs after label names ensure exact matching)
+          # gh label list format: "name<TAB>description<TAB>color"
           gh label list --repo ${{ github.repository }} --limit 1000 | grep -F -e "dependencies	" -e "github-actions	" -e "production	" -e "automated	" || true
           echo ""
           echo "✅ Label creation workflow complete!"
