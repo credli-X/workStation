@@ -46,7 +46,8 @@ jobs:
           
           MISSING=()
           for label in "dependencies" "github-actions" "production" "automated"; do
-            if ! gh label list --repo ${{ github.repository }} --limit 1000 | grep -q "^$label[[:space:]]"; then
+            # Use grep -F for fixed string matching with tab delimiter
+            if ! gh label list --repo ${{ github.repository }} --limit 1000 | grep -qF "$label	"; then
               MISSING+=("$label")
             fi
           done
@@ -63,7 +64,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -q "^dependencies[[:space:]]"; then
+          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -qF "dependencies	"; then
             echo "ℹ️  Label 'dependencies' already exists"
           else
             gh label create "dependencies" \
@@ -79,7 +80,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -q "^github-actions[[:space:]]"; then
+          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -qF "github-actions	"; then
             echo "ℹ️  Label 'github-actions' already exists"
           else
             gh label create "github-actions" \
@@ -95,7 +96,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -q "^production[[:space:]]"; then
+          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -qF "production	"; then
             echo "ℹ️  Label 'production' already exists"
           else
             gh label create "production" \
@@ -111,7 +112,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -q "^automated[[:space:]]"; then
+          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -qF "automated	"; then
             echo "ℹ️  Label 'automated' already exists"
           else
             gh label create "automated" \
@@ -129,7 +130,8 @@ jobs:
         run: |
           echo "📊 Final label status:"
           echo ""
-          gh label list --repo ${{ github.repository }} --limit 1000 | grep -E "dependencies|github-actions|production|automated" || true
+          # Show exact matches only (using tab as field separator)
+          gh label list --repo ${{ github.repository }} --limit 1000 | grep -F -e "dependencies	" -e "github-actions	" -e "production	" -e "automated	" || true
           echo ""
           echo "✅ Label creation workflow complete!"
           echo "View all labels: https://github.com/${{ github.repository }}/labels"

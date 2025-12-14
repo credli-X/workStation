@@ -18,19 +18,7 @@
 
 set -euo pipefail
 
-# Configuration
-# Auto-detect repository from git remote, or use provided argument
-REPO="${1:-$(git remote get-url origin 2>/dev/null | sed -e 's/.*github.com[:/]\(.*\)\.git/\1/' -e 's/.*github.com[:/]\(.*\)/\1/')}"
-if [ -z "$REPO" ] || [ "$REPO" = "origin" ]; then
-    REPO="credli-X/workStation"
-    print_warning "Could not auto-detect repository, using default: $REPO"
-fi
-COLOR_BLUE="0366d6"
-COLOR_BLACK="000000"
-COLOR_RED="d73a4a"
-COLOR_GRAY="ededed"
-
-# Colors for output
+# Colors for output (define first)
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -48,6 +36,27 @@ print_error() {
 print_warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
 }
+
+# Configuration
+# Auto-detect repository from git remote, or use provided argument
+if [ -n "$1" ]; then
+    REPO="$1"
+else
+    # Extract owner/repo from git remote URL
+    REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
+    if [[ "$REMOTE_URL" =~ github\.com[:/]([^/]+/[^/]+)(\.git)?$ ]]; then
+        REPO="${BASH_REMATCH[1]}"
+        REPO="${REPO%.git}"  # Remove .git suffix if present
+    else
+        REPO="credli-X/workStation"
+        print_warning "Could not auto-detect repository, using default: $REPO"
+    fi
+fi
+
+COLOR_BLUE="0366d6"
+COLOR_BLACK="000000"
+COLOR_RED="d73a4a"
+COLOR_GRAY="ededed"
 
 # Check if gh CLI is installed
 if ! command -v gh &> /dev/null; then
@@ -81,8 +90,8 @@ create_label() {
         echo -e "${GREEN}✓${NC} Created label: $name"
         return 0
     else
-        # Check if it already exists (exact match using tab separator)
-        if gh label list --repo "$REPO" --limit 1000 | grep -q "^$name[[:space:]]"; then
+        # Check if it already exists (exact match using fixed string)
+        if gh label list --repo "$REPO" --limit 1000 | grep -qF "$name	"; then
             print_warning "Label '$name' already exists"
             return 0
         else
