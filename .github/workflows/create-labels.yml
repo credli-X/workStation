@@ -1,0 +1,143 @@
+name: Create GitHub Labels
+
+# This workflow creates the required labels for Dependabot configuration
+# It can be run manually via workflow_dispatch or automatically on push to main
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (list labels without creating)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+  # Automatically run when dependabot.yml is modified
+  push:
+    paths:
+      - '.github/dependabot.yml'
+    branches:
+      - main
+
+permissions:
+  issues: write  # Required to create labels
+  contents: read
+
+jobs:
+  create-labels:
+    runs-on: ubuntu-latest
+    name: Create Required Labels
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: List existing labels (dry run)
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "📋 Current labels in repository:"
+          gh label list --repo ${{ github.repository }} --limit 1000
+          echo ""
+          echo "🔍 Checking for required labels..."
+          
+          MISSING=()
+          for label in "dependencies" "github-actions" "production" "automated"; do
+            # Use grep -F for fixed string matching with tab delimiter
+            # Note: Tab after $label ensures exact match (gh label list uses tab as field separator)
+            if ! gh label list --repo ${{ github.repository }} --limit 1000 | grep -qF "$label	"; then
+              MISSING+=("$label")
+            fi
+          done
+          
+          if [ ${#MISSING[@]} -eq 0 ]; then
+            echo "✅ All required labels exist"
+          else
+            echo "❌ Missing labels: ${MISSING[*]}"
+            echo "Run this workflow without dry_run to create them"
+          fi
+
+      - name: Create dependencies label
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Tab after label name ensures exact match (gh label list uses tab as delimiter)
+          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -qF "dependencies	"; then
+            echo "ℹ️  Label 'dependencies' already exists"
+          else
+            gh label create "dependencies" \
+              --repo ${{ github.repository }} \
+              --color "0366d6" \
+              --description "Pull requests that update a dependency file" \
+              && echo "✅ Created label: dependencies" \
+              || echo "⚠️  Failed to create label: dependencies"
+          fi
+
+      - name: Create github-actions label
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Tab after label name ensures exact match (gh label list uses tab as delimiter)
+          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -qF "github-actions	"; then
+            echo "ℹ️  Label 'github-actions' already exists"
+          else
+            gh label create "github-actions" \
+              --repo ${{ github.repository }} \
+              --color "000000" \
+              --description "Pull requests that update GitHub Actions code" \
+              && echo "✅ Created label: github-actions" \
+              || echo "⚠️  Failed to create label: github-actions"
+          fi
+
+      - name: Create production label
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Tab after label name ensures exact match (gh label list uses tab as delimiter)
+          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -qF "production	"; then
+            echo "ℹ️  Label 'production' already exists"
+          else
+            gh label create "production" \
+              --repo ${{ github.repository }} \
+              --color "d73a4a" \
+              --description "Production dependencies" \
+              && echo "✅ Created label: production" \
+              || echo "⚠️  Failed to create label: production"
+          fi
+
+      - name: Create automated label
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Tab after label name ensures exact match (gh label list uses tab as delimiter)
+          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -qF "automated	"; then
+            echo "ℹ️  Label 'automated' already exists"
+          else
+            gh label create "automated" \
+              --repo ${{ github.repository }} \
+              --color "ededed" \
+              --description "Automated updates" \
+              && echo "✅ Created label: automated" \
+              || echo "⚠️  Failed to create label: automated"
+          fi
+
+      - name: Summary
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "📊 Final label status:"
+          echo ""
+          # Show exact matches only (tabs after label names ensure exact matching)
+          # gh label list format: "name<TAB>description<TAB>color"
+          gh label list --repo ${{ github.repository }} --limit 1000 | grep -F -e "dependencies	" -e "github-actions	" -e "production	" -e "automated	" || true
+          echo ""
+          echo "✅ Label creation workflow complete!"
+          echo "View all labels: https://github.com/${{ github.repository }}/labels"

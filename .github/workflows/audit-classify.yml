@@ -97,7 +97,7 @@ jobs:
         continue-on-error: true
       
       - name: Upload consolidated results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: scan-results-consolidated
           path: scan-results/
@@ -176,7 +176,7 @@ jobs:
           fi
       
       - name: Upload code issues classification
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: classified-code-issues
           path: code-issues.md
@@ -241,7 +241,7 @@ jobs:
           fi
       
       - name: Upload security issues classification
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: classified-security-issues
           path: security-issues.md
@@ -304,7 +304,7 @@ jobs:
           cat dependency-issues.md
       
       - name: Upload dependency issues classification
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: classified-dependency-issues
           path: dependency-issues.md
@@ -371,7 +371,7 @@ jobs:
           cat priority-matrix.md
       
       - name: Upload priority matrix
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: audit-priority-matrix
           path: priority-matrix.md

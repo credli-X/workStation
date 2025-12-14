@@ -464,7 +464,7 @@ jobs:
       
       - name: Upload summary
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: update-summary-${{ github.run_id }}
           path: repo-update-summary-*.md

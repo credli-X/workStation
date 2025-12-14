@@ -39,7 +39,7 @@ jobs:
           npm run build
       
       - name: Upload artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: agent2-dist
           path: agents/agent2/dist

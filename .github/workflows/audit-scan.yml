@@ -209,7 +209,7 @@ jobs:
           echo "✓ File enumeration complete"
       
       - name: Upload file list
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: discovered-files
           path: discovered-files.txt
@@ -249,7 +249,7 @@ jobs:
           cat typescript-report.txt
       
       - name: Upload static analysis results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: static-analysis-results
           path: |
@@ -295,7 +295,7 @@ jobs:
           category: "/language:javascript"
       
       - name: Upload security scan results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: security-scan-results
           path: |
@@ -339,7 +339,7 @@ jobs:
           npm outdated || true
       
       - name: Upload dependency check results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: dependency-check-results
           path: |
@@ -466,7 +466,7 @@ jobs:
           cat scan-summary.md
       
       - name: Upload scan summary
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: audit-scan-summary
           path: scan-summary.md
