@@ -195,3 +195,53 @@ If container extraction doesn't work:
 - **Rebuild from scratch:** If you remember the structure, rebuild the workspace
 
 See QUICK_RECOVERY_GUIDE.md for more options.
+
+---
+
+## Repository Maintenance Scripts
+
+### 🏷️ create-github-labels.sh
+
+**Purpose:** Create required GitHub labels for Dependabot configuration
+
+**Usage:**
+```bash
+./scripts/create-github-labels.sh
+```
+
+**What it does:**
+- Creates `dependencies` label (blue) - For dependency updates
+- Creates `github-actions` label (black) - For workflow updates
+- Creates `production` label (red) - For production dependencies
+- Creates `automated` label (gray) - For automated updates
+
+**Prerequisites:**
+- GitHub CLI (`gh`) installed
+- Authenticated with GitHub: `gh auth login`
+- Write access to the repository
+
+**Related:**
+- GitHub Actions workflow: `.github/workflows/create-labels.yml`
+- Documentation: `LABEL_FIX_GUIDE.md`
+
+## Alternative: GitHub Actions Automation
+
+All maintenance scripts have corresponding GitHub Actions workflows for zero-setup automation.
+
+### Trigger via GitHub UI:
+1. Go to: https://github.com/credli-X/workStation/actions
+2. Select the workflow you want to run
+3. Click "Run workflow"
+4. Configure options and click "Run workflow" button
+
+### Trigger via GitHub CLI:
+```bash
+# List available workflows
+gh workflow list
+
+# Run label creation workflow
+gh workflow run create-labels.yml
+
+# Check workflow status
+gh run list --workflow=create-labels.yml
+```
