@@ -19,7 +19,12 @@
 set -euo pipefail
 
 # Configuration
-REPO="credli-X/workStation"
+# Auto-detect repository from git remote, or use provided argument
+REPO="${1:-$(git remote get-url origin 2>/dev/null | sed -e 's/.*github.com[:/]\(.*\)\.git/\1/' -e 's/.*github.com[:/]\(.*\)/\1/')}"
+if [ -z "$REPO" ] || [ "$REPO" = "origin" ]; then
+    REPO="credli-X/workStation"
+    print_warning "Could not auto-detect repository, using default: $REPO"
+fi
 COLOR_BLUE="0366d6"
 COLOR_BLACK="000000"
 COLOR_RED="d73a4a"
@@ -76,8 +81,8 @@ create_label() {
         echo -e "${GREEN}✓${NC} Created label: $name"
         return 0
     else
-        # Check if it already exists
-        if gh label list --repo "$REPO" --limit 1000 | grep -q "^$name"; then
+        # Check if it already exists (exact match using tab separator)
+        if gh label list --repo "$REPO" --limit 1000 | grep -q "^$name[[:space:]]"; then
             print_warning "Label '$name' already exists"
             return 0
         else

@@ -206,7 +206,11 @@ See QUICK_RECOVERY_GUIDE.md for more options.
 
 **Usage:**
 ```bash
+# Auto-detect repository from git remote
 ./scripts/create-github-labels.sh
+
+# Or specify repository explicitly
+./scripts/create-github-labels.sh owner/repo-name
 ```
 
 **What it does:**

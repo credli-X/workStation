@@ -46,7 +46,7 @@ jobs:
           
           MISSING=()
           for label in "dependencies" "github-actions" "production" "automated"; do
-            if ! gh label list --repo ${{ github.repository }} --limit 1000 | grep -q "^$label"; then
+            if ! gh label list --repo ${{ github.repository }} --limit 1000 | grep -q "^$label[[:space:]]"; then
               MISSING+=("$label")
             fi
           done
@@ -63,7 +63,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -q "^dependencies"; then
+          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -q "^dependencies[[:space:]]"; then
             echo "ℹ️  Label 'dependencies' already exists"
           else
             gh label create "dependencies" \
@@ -79,7 +79,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -q "^github-actions"; then
+          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -q "^github-actions[[:space:]]"; then
             echo "ℹ️  Label 'github-actions' already exists"
           else
             gh label create "github-actions" \
@@ -95,7 +95,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -q "^production"; then
+          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -q "^production[[:space:]]"; then
             echo "ℹ️  Label 'production' already exists"
           else
             gh label create "production" \
@@ -111,7 +111,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -q "^automated"; then
+          if gh label list --repo ${{ github.repository }} --limit 1000 | grep -q "^automated[[:space:]]"; then
             echo "ℹ️  Label 'automated' already exists"
           else
             gh label create "automated" \
