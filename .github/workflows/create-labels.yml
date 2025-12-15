@@ -32,7 +32,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: List existing labels (dry run)
         if: ${{ github.event.inputs.dry_run == 'true' }}
